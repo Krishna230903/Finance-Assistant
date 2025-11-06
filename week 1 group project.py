@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from datetime import datetime
+# Removed 'datetime' as it wasn't used
 
 # --- Setup for Streamlit ---
 st.set_page_config(page_title="Personal Finance Tool", layout="centered")
@@ -63,20 +63,27 @@ if mode == "📊 Personal Finance Analyzer":
                 {'Type': 'Investment', 'Category': 'Investments', 'Amount': investments}
             ])
             
-            # --- Pie Chart: Distribution ---
-            st.markdown("### 💡 Financial Distribution")
+            # Data for Pie and Bar charts (Outflow only)
+            filtered = data[data['Type'].isin(['Expense', 'Savings', 'Investment'])].copy()
+            # Data for Pie chart (non-zero values only)
+            pie_data_df = filtered[filtered['Amount'] > 0].copy()
+
+            # --- Pie Chart: Outflow Distribution ---
+            st.markdown("### 💡 Outflow Distribution")
             fig1, ax1 = plt.subplots()
-            pie_data = data.groupby('Type')['Amount'].sum()
-            pie_data = pie_data[pie_data.index.isin(['Income', 'Expense', 'Savings', 'Investment'])]
-            ax1.pie(pie_data, labels=pie_data.index,
-                    autopct=lambda p: f'{p:.1f}%\n({currency}{p*sum(pie_data)/100:,.0f})',
-                    colors=['#4CAF50', '#F44336', '#2196F3', '#FFC107'], startangle=90)
-            ax1.axis('equal')
-            st.pyplot(fig1)
+
+            if not pie_data_df.empty:
+                ax1.pie(pie_data_df['Amount'], labels=pie_data_df['Category'],
+                        autopct=lambda p: f'{p:.1f}%\n({currency}{p*sum(pie_data_df["Amount"])/100:,.0f})',
+                        colors=['#F44336', '#2196F3', '#FFC107'], startangle=90)
+                ax1.axis('equal')
+                st.pyplot(fig1)
+            else:
+                st.info("No Expense, Savings, or Investment data to display in the pie chart.")
+
 
             # --- Bar Chart: Expense Breakdown ---
             st.markdown("### 📊 Expense, Savings & Investment Breakdown")
-            filtered = data[data['Type'].isin(['Expense', 'Savings', 'Investment'])].copy()
             fig2, ax2 = plt.subplots()
             sns.barplot(x='Amount', y='Category', data=filtered, palette="viridis", ax=ax2)
             ax2.set_xlabel(f"Amount ({currency})")
@@ -91,3 +98,4 @@ elif mode == "💬 Manual Q&A Chatbot":
         st.markdown("#### 🤖 Answer:")
         st.success(faq[question])
 
+# --- FIX: Removed the stray '}' from the end of the file ---
