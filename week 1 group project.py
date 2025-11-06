@@ -1,4 +1,4 @@
-pip install matplotlib
+!pip install matplotlib
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -100,4 +100,5 @@ elif mode == "💬 Manual Q&A Chatbot":
         st.success(faq[question])
 
 # --- FIX: Removed the stray '}' from the end of the file ---
+
 
