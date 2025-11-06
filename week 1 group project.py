@@ -55,32 +55,52 @@ if mode == "📊 Personal Finance Analyzer":
         st.success(f"Remaining Balance: {currency}{remaining:,.2f}")
 
         if st.button("Generate Analysis"):
-            # Prepare Data
-            data = pd.DataFrame([
-                {'Type': 'Income', 'Category': 'Income', 'Amount': income},
-                {'Type': 'Expense', 'Category': 'Expenses', 'Amount': expenses},
-                {'Type': 'Savings', 'Category': 'Savings', 'Amount': savings},
-                {'Type': 'Investment', 'Category': 'Investments', 'Amount': investments}
+            
+            # --- Pie Chart: Distribution of Income ---
+            st.markdown("### 💡 Income Distribution")
+            
+            # Data for the pie chart
+            labels = ['Expenses', 'Savings', 'Investments', 'Remaining']
+            sizes = [expenses, savings, investments, remaining]
+            
+            # Filter out zero values to avoid clutter
+            non_zero_data = {label: size for label, size in zip(labels, sizes) if size > 0}
+            
+            if not non_zero_data or income == 0:
+                st.warning("Please enter your income and at least one outflow to see the distribution.")
+            else:
+                fig1, ax1 = plt.subplots()
+                # Use the 'sizes' from the filtered dictionary
+                pie_sizes = list(non_zero_data.values())
+                pie_labels = list(non_zero_data.keys())
+                
+                ax1.pie(pie_sizes, labels=pie_labels,
+                        autopct=lambda p: f'{p:.1f}%\n({currency}{p*sum(pie_sizes)/100:,.0f})',
+                        colors=sns.color_palette("pastel")[0:len(pie_labels)], 
+                        startangle=90)
+                ax1.axis('equal')
+                st.pyplot(fig1)
+
+            # --- Bar Chart: Outflow Breakdown ---
+            st.markdown("### 📊 Outflow Breakdown")
+            
+            # Prepare data for the bar chart
+            bar_data = pd.DataFrame([
+                {'Category': 'Expenses', 'Amount': expenses},
+                {'Category': 'Savings', 'Amount': savings},
+                {'Category': 'Investments', 'Amount': investments}
             ])
             
-            # --- Pie Chart: Distribution ---
-            st.markdown("### 💡 Financial Distribution")
-            fig1, ax1 = plt.subplots()
-            pie_data = data.groupby('Type')['Amount'].sum()
-            pie_data = pie_data[pie_data.index.isin(['Income', 'Expense', 'Savings', 'Investment'])]
-            ax1.pie(pie_data, labels=pie_data.index,
-                    autopct=lambda p: f'{p:.1f}%\n({currency}{p*sum(pie_data)/100:,.0f})',
-                    colors=['#4CAF50', '#F44336', '#2196F3', '#FFC107'], startangle=90)
-            ax1.axis('equal')
-            st.pyplot(fig1)
+            # Filter out zero values
+            bar_data = bar_data[bar_data['Amount'] > 0]
 
-            # --- Bar Chart: Expense Breakdown ---
-            st.markdown("### 📊 Expense, Savings & Investment Breakdown")
-            filtered = data[data['Type'].isin(['Expense', 'Savings', 'Investment'])].copy()
-            fig2, ax2 = plt.subplots()
-            sns.barplot(x='Amount', y='Category', data=filtered, palette="viridis", ax=ax2)
-            ax2.set_xlabel(f"Amount ({currency})")
-            st.pyplot(fig2)
+            if not bar_data.empty:
+                fig2, ax2 = plt.subplots()
+                sns.barplot(x='Amount', y='Category', data=bar_data, palette="viridis", ax=ax2)
+                ax2.set_xlabel(f"Amount ({currency})")
+                st.pyplot(fig2)
+            else:
+                st.info("No outflows (expenses, savings, or investments) entered.")
 
 # --- Manual Q&A Chatbot ---
 elif mode == "💬 Manual Q&A Chatbot":
@@ -90,4 +110,3 @@ elif mode == "💬 Manual Q&A Chatbot":
     if question:
         st.markdown("#### 🤖 Answer:")
         st.success(faq[question])
-
